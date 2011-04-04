@@ -1,0 +1,22 @@
+<html>
+    <head>
+        <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+        <link rel="shortcut icon" href="/images/favicon.png" type="image/x-icon" />
+        <title>MSISDN Area</title>
+    </head>
+    <body>
+        <form method="post" name="form1">
+            <label>Masukkan nomor handphone:</label>
+            <div>
+                <input name="msisdn" value="{{ msisdn }}">
+            </div>
+            <div class="description">Contoh: 08179140068, +628179140068</div>
+            <input type="submit" class="form-submit" value="Lihat wilayahnya">
+        </form>
+        <div class="highlight">{{ wilayah }}</div>
+        <div class="center">Powered by Django App Engine {{ django_version }}</div>
+    </body>
+    <script>
+        document.form1.msisdn.focus();
+    </script>    
+</html>
