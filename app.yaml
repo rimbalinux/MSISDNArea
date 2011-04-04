@@ -1,0 +1,31 @@
+application: msisdnarea 
+version: 2 
+runtime: python
+api_version: 1
+
+#builtins:
+#- remote_api: off
+
+#inbound_services:
+#- warmup
+
+handlers:
+- url: /stylesheets
+  static_dir: templates/stylesheets
+
+- url: /images
+  static_dir: templates/images
+
+#- url: /_ah/queue/deferred
+#  script: djangoappengine/deferred/handler.py
+#  login: admin
+
+#- url: /_ah/stats/.*
+#  script: djangoappengine/appstats/ui.py
+
+#- url: /media/admin
+#  static_dir: django/contrib/admin/media
+#  expiration: '0'
+
+- url: /.*
+  script: djangoappengine/main/main.py
