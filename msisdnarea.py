@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.template import Context, loader
 from django import get_version
 from msisdnprefix import prefix
+from menu import menus
 
 
 def wilayah(m):
@@ -14,10 +15,11 @@ def wilayah(m):
         return prefix[m]
     return wilayah(m[:-1])
 
-
 def msisdn(request):
     msisdn = 'msisdn' in request.POST and request.POST['msisdn'] or ''
     t = loader.get_template('msisdnarea.html')
-    c = Context({'wilayah': wilayah(msisdn), 'msisdn': msisdn,
-        'django_version': get_version()})
-    return HttpResponse(t.render(c))
+    p = {'wilayah': wilayah(msisdn),
+         'msisdn': msisdn,
+        }
+    p.update(menus(request))
+    return HttpResponse(t.render(Context(p)))
