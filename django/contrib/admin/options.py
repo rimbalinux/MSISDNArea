@@ -1,9 +1,10 @@
 from django import forms, template
 from django.forms.formsets import all_valid
-from django.forms.models import (modelform_factory, modelformset_factory,
-    inlineformset_factory, BaseInlineFormSet)
+from django.forms.models import modelform_factory, modelformset_factory, inlineformset_factory
+from django.forms.models import BaseInlineFormSet
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.admin import widgets, helpers
+from django.contrib.admin import widgets
+from django.contrib.admin import helpers
 from django.contrib.admin.util import unquote, flatten_fieldsets, get_deleted_objects, model_format_dict
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_protect
@@ -204,16 +205,7 @@ class BaseModelAdmin(object):
             qs = qs.order_by(*ordering)
         return qs
 
-    def lookup_allowed(self, lookup, value):
-        model = self.model
-        # Check FKey lookups that are allowed, so that popups produced by
-        # ForeignKeyRawIdWidget, on the basis of ForeignKey.limit_choices_to,
-        # are allowed to work.
-        for l in model._meta.related_fkey_lookups:
-            for k, v in widgets.url_params_from_lookup_dict(l).items():
-                if k == lookup and v == value:
-                    return True
-
+    def lookup_allowed(self, lookup):
         parts = lookup.split(LOOKUP_SEP)
 
         # Last term in lookup is a query term (__exact, __startswith etc)
@@ -225,6 +217,7 @@ class BaseModelAdmin(object):
         # if foo has been specificially included in the lookup list; so
         # drop __id if it is the last part. However, first we need to find
         # the pk attribute name.
+        model = self.model
         pk_attr_name = None
         for part in parts[:-1]:
             field, _, _, _ = model._meta.get_field_by_name(part)
@@ -546,7 +539,7 @@ class ModelAdmin(BaseModelAdmin):
         # want *any* actions enabled on this page.
         from django.contrib.admin.views.main import IS_POPUP_VAR
         if self.actions is None or IS_POPUP_VAR in request.GET:
-            return SortedDict()
+            return []
 
         actions = []
 
@@ -664,7 +657,7 @@ class ModelAdmin(BaseModelAdmin):
         """
         obj.save()
 
-    def delete_model(self, request, obj):
+    def delete_model(self, requet, obj):
         """
         Given a model instance delete it from the database.
         """
@@ -747,16 +740,9 @@ class ModelAdmin(BaseModelAdmin):
         Determines the HttpResponse for the change_view stage.
         """
         opts = obj._meta
-
-        # Handle proxy models automatically created by .only() or .defer()
-        verbose_name = opts.verbose_name
-        if obj._deferred:
-            opts_ = opts.proxy_for_model._meta
-            verbose_name = opts_.verbose_name
-
         pk_value = obj._get_pk_val()
 
-        msg = _('The %(name)s "%(obj)s" was changed successfully.') % {'name': force_unicode(verbose_name), 'obj': force_unicode(obj)}
+        msg = _('The %(name)s "%(obj)s" was changed successfully.') % {'name': force_unicode(opts.verbose_name), 'obj': force_unicode(obj)}
         if "_continue" in request.POST:
             self.message_user(request, msg + ' ' + _("You may edit it again below."))
             if "_popup" in request.REQUEST:
@@ -764,21 +750,15 @@ class ModelAdmin(BaseModelAdmin):
             else:
                 return HttpResponseRedirect(request.path)
         elif "_saveasnew" in request.POST:
-            msg = _('The %(name)s "%(obj)s" was added successfully. You may edit it again below.') % {'name': force_unicode(verbose_name), 'obj': obj}
+            msg = _('The %(name)s "%(obj)s" was added successfully. You may edit it again below.') % {'name': force_unicode(opts.verbose_name), 'obj': obj}
             self.message_user(request, msg)
             return HttpResponseRedirect("../%s/" % pk_value)
         elif "_addanother" in request.POST:
-            self.message_user(request, msg + ' ' + (_("You may add another %s below.") % force_unicode(verbose_name)))
+            self.message_user(request, msg + ' ' + (_("You may add another %s below.") % force_unicode(opts.verbose_name)))
             return HttpResponseRedirect("../add/")
         else:
             self.message_user(request, msg)
-            # Figure out where to redirect. If the user has change permission,
-            # redirect to the change-list page for this object. Otherwise,
-            # redirect to the admin index.
-            if self.has_change_permission(request, None):
-                return HttpResponseRedirect('../')
-            else:
-                return HttpResponseRedirect('../../../')
+            return HttpResponseRedirect("../")
 
     def response_action(self, request, queryset):
         """
@@ -1197,7 +1177,7 @@ class ModelAdmin(BaseModelAdmin):
 
         # Populate deleted_objects, a data structure of all related objects that
         # will also be deleted.
-        (deleted_objects, perms_needed, protected) = get_deleted_objects(
+        (deleted_objects, perms_needed) = get_deleted_objects(
             [obj], opts, request.user, self.admin_site, using)
 
         if request.POST: # The user has already confirmed the deletion.
@@ -1213,20 +1193,12 @@ class ModelAdmin(BaseModelAdmin):
                 return HttpResponseRedirect("../../../../")
             return HttpResponseRedirect("../../")
 
-        object_name = force_unicode(opts.verbose_name)
-
-        if perms_needed or protected:
-            title = _("Cannot delete %(name)s") % {"name": object_name}
-        else:
-            title = _("Are you sure?")
-
         context = {
-            "title": title,
-            "object_name": object_name,
+            "title": _("Are you sure?"),
+            "object_name": force_unicode(opts.verbose_name),
             "object": obj,
             "deleted_objects": deleted_objects,
             "perms_lacking": perms_needed,
-            "protected": protected,
             "opts": opts,
             "root_path": self.admin_site.root_path,
             "app_label": app_label,

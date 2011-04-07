@@ -10,7 +10,7 @@ from django.contrib.staticfiles import utils
 class StaticFilesStorage(FileSystemStorage):
     """
     Standard file system storage for static files.
-
+    
     The defaults for ``location`` and ``base_url`` are
     ``STATIC_ROOT`` and ``STATIC_URL``.
     """
@@ -21,12 +21,15 @@ class StaticFilesStorage(FileSystemStorage):
             base_url = settings.STATIC_URL
         if not location:
             raise ImproperlyConfigured("You're using the staticfiles app "
-                "without having set the STATIC_ROOT setting.")
+                "without having set the STATIC_ROOT setting. Set it to "
+                "the absolute path of the directory that holds static files.")
         # check for None since we might use a root URL (``/``)
         if base_url is None:
             raise ImproperlyConfigured("You're using the staticfiles app "
-                "without having set the STATIC_URL setting.")
-        utils.check_settings()
+                "without having set the STATIC_URL setting. Set it to "
+                "URL that handles the files served from STATIC_ROOT.")
+        if settings.DEBUG:
+            utils.check_settings()
         super(StaticFilesStorage, self).__init__(location, base_url, *args, **kwargs)
 
 

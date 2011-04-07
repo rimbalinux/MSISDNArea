@@ -1,5 +1,5 @@
-application: msisdnarea 
-version: 2 
+application: msisdnarea
+version: 3
 runtime: python
 api_version: 1
 
@@ -10,22 +10,21 @@ inbound_services:
 - warmup
 
 handlers:
-- url: /stylesheets
-  static_dir: templates/stylesheets
-
-- url: /images
-  static_dir: templates/images
-
 - url: /_ah/queue/deferred
   script: djangoappengine/deferred/handler.py
   login: admin
 
-- url: /_ah/stats/.*
-  script: djangoappengine/appstats/ui.py
+- url: /blank.html
+  static_files: blank.html
+  upload: blank.html
 
 - url: /media/admin
-  static_dir: django/contrib/admin/media
+  static_dir: django/contrib/admin/media/
   expiration: '0'
+
+- url: /media
+  static_dir: _generated_media/
+  expiration: '365d'
 
 - url: /.*
   script: djangoappengine/main/main.py

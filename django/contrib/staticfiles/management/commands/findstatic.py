@@ -1,7 +1,6 @@
 import os
 from optparse import make_option
 from django.core.management.base import LabelCommand
-from django.utils.encoding import smart_str, smart_unicode
 
 from django.contrib.staticfiles import finders
 
@@ -17,15 +16,11 @@ class Command(LabelCommand):
     def handle_label(self, path, **options):
         verbosity = int(options.get('verbosity', 1))
         result = finders.find(path, all=options['all'])
-        path = smart_unicode(path)
         if result:
             if not isinstance(result, (list, tuple)):
                 result = [result]
-            output = u'\n  '.join(
-                (smart_unicode(os.path.realpath(path)) for path in result))
-            self.stdout.write(
-                smart_str(u"Found '%s' here:\n  %s\n" % (path, output)))
+            output = '\n  '.join((os.path.realpath(path) for path in result))
+            self.stdout.write("Found %r here:\n  %s\n" % (path, output))
         else:
             if verbosity >= 1:
-                self.stderr.write(
-                    smart_str("No matching file found for '%s'.\n" % path))
+                self.stdout.write("No matching file found for %r.\n" % path)

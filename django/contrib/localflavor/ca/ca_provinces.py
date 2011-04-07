@@ -8,18 +8,13 @@ Source: http://www.canada.gc.ca/othergov/prov_e.html
 This exists in this standalone file so that it's only imported into memory 
 when explicitly needed. 
 """ 
-import warnings
-warnings.warn(
-    'There have been recent changes to the CA localflavor. See the release notes for details',
-    RuntimeWarning
-)
 
 PROVINCE_CHOICES = ( 
     ('AB', 'Alberta'), 
     ('BC', 'British Columbia'), 
     ('MB', 'Manitoba'), 
     ('NB', 'New Brunswick'), 
-    ('NL', 'Newfoundland and Labrador'),
+    ('NF', 'Newfoundland and Labrador'), 
     ('NT', 'Northwest Territories'), 
     ('NS', 'Nova Scotia'), 
     ('NU', 'Nunavut'), 
@@ -27,7 +22,7 @@ PROVINCE_CHOICES = (
     ('PE', 'Prince Edward Island'), 
     ('QC', 'Quebec'), 
     ('SK', 'Saskatchewan'), 
-    ('YT', 'Yukon')
+    ('YK', 'Yukon') 
 )
 
 PROVINCES_NORMALIZED = {
@@ -40,10 +35,9 @@ PROVINCES_NORMALIZED = {
     'manitoba': 'MB',
     'nb': 'NB',
     'new brunswick': 'NB',
-    'nf': 'NL',
-    'nl': 'NL',
-    'newfoundland': 'NL',
-    'newfoundland and labrador': 'NL',
+    'nf': 'NF',
+    'newfoundland': 'NF',
+    'newfoundland and labrador': 'NF',
     'nt': 'NT',
     'northwest territories': 'NT',
     'ns': 'NS',
@@ -60,8 +54,6 @@ PROVINCES_NORMALIZED = {
     'quebec': 'QC',
     'sk': 'SK',
     'saskatchewan': 'SK',
-    'yk': 'YT',
-    'yt': 'YT',
-    'yukon': 'YT',
-    'yukon territory': 'YT',
+    'yk': 'YK',
+    'yukon': 'YK',
 }

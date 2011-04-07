@@ -1,5 +1,18 @@
 indexes:
 
+- kind: blog_post
+  properties:
+  - name: blog_id
+  - name: published
+  - name: published_on
+    direction: desc
+
+- kind: blog_post
+  properties:
+  - name: published
+  - name: published_on
+    direction: desc
+
 - kind: django_admin_log
   properties:
   - name: user_id

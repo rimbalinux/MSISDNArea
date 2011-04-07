@@ -15,14 +15,6 @@ ROOT_URLCONF = 'urls'
 DATABASES = {
     'default': {
         'ENGINE': 'djangoappengine.db',
-
-        # Other settings which you might want to override in your settings.py
-
-        # Activates high-replication support for remote_api
-        # 'HIGH_REPLICATION': True,
-
-        # Switch to the App Engine for Business domain
-        # 'DOMAIN': 'googleplex.com',
     },
 }
 
@@ -40,13 +32,7 @@ FILE_UPLOAD_HANDLERS = (
     'django.core.files.uploadhandler.MemoryFileUploadHandler',
 )
 
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-        'TIMEOUT': 0,
-    }
-}
-
+CACHE_BACKEND = 'memcached://?timeout=0'
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 
 if not on_production_server:

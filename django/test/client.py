@@ -5,7 +5,6 @@ import os
 import re
 import mimetypes
 import warnings
-from copy import copy
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -47,7 +46,7 @@ class FakePayload(object):
 
     def read(self, num_bytes=None):
         if num_bytes is None:
-            num_bytes = self.__len or 0
+            num_bytes = self.__len or 1
         assert self.__len >= num_bytes, "Cannot read more than the available bytes from the HTTP incoming data."
         content = self.__content.read(num_bytes)
         self.__len -= num_bytes
@@ -92,12 +91,9 @@ class ClientHandler(BaseHandler):
 def store_rendered_templates(store, signal, sender, template, context, **kwargs):
     """
     Stores templates and contexts that are rendered.
-
-    The context is copied so that it is an accurate representation at the time
-    of rendering.
     """
     store.setdefault('templates', []).append(template)
-    store.setdefault('context', ContextList()).append(copy(context))
+    store.setdefault('context', ContextList()).append(context)
 
 def encode_multipart(boundary, data):
     """

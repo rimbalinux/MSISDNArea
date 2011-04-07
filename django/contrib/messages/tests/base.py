@@ -58,8 +58,6 @@ class BaseTest(TestCase):
         self._message_storage = settings.MESSAGE_STORAGE
         settings.MESSAGE_STORAGE = '%s.%s' % (self.storage_class.__module__,
                                               self.storage_class.__name__)
-        self.old_TEMPLATE_DIRS = settings.TEMPLATE_DIRS
-        settings.TEMPLATE_DIRS = ()
         self.save_warnings_state()
         warnings.filterwarnings('ignore', category=DeprecationWarning,
                                 module='django.contrib.auth.models')
@@ -73,7 +71,6 @@ class BaseTest(TestCase):
            self._template_context_processors
         settings.INSTALLED_APPS = self._installed_apps
         settings.MESSAGE_STORAGE = self._message_storage
-        settings.TEMPLATE_DIRS = self.old_TEMPLATE_DIRS
         self.restore_warnings_state()
 
     def restore_setting(self, setting):
@@ -349,7 +346,7 @@ class BaseTest(TestCase):
         self.assertFalse(storage.used)
         # After iterating the storage engine directly, the used flag is set.
         data = list(storage)
-        self.assertTrue(storage.used)
+        self.assert_(storage.used)
         # The data does not disappear because it has been iterated.
         self.assertEqual(data, list(storage))
 
@@ -357,7 +354,7 @@ class BaseTest(TestCase):
         storage = self.get_existing_storage()
         self.assertFalse(storage.added_new)
         storage.add(constants.INFO, 'Test message 3')
-        self.assertTrue(storage.added_new)
+        self.assert_(storage.added_new)
 
     def test_default_level(self):
         # get_level works even with no storage on the request.
@@ -378,7 +375,7 @@ class BaseTest(TestCase):
         storage = self.storage_class(request)
         request._messages = storage
 
-        self.assertTrue(set_level(request, 5))
+        self.assert_(set_level(request, 5))
         self.assertEqual(get_level(request), 5)
 
         add_level_messages(storage)
@@ -389,7 +386,7 @@ class BaseTest(TestCase):
         storage = self.storage_class(request)
         request._messages = storage
 
-        self.assertTrue(set_level(request, 30))
+        self.assert_(set_level(request, 30))
         self.assertEqual(get_level(request), 30)
 
         add_level_messages(storage)

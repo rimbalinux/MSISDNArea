@@ -178,20 +178,9 @@ class RelatedField(object):
         # the primary key may itself be an object - so we need to keep drilling
         # down until we hit a value that can be used for a comparison.
         v = value
-
-        # In the case of an FK to 'self', this check allows to_field to be used
-        # for both forwards and reverse lookups across the FK. (For normal FKs,
-        # it's only relevant for forward lookups).
-        if isinstance(v, self.rel.to):
-            field_name = getattr(self.rel, "field_name", None)
-        else:
-            field_name = None
         try:
             while True:
-                if field_name is None:
-                    field_name = v._meta.pk.name
-                v = getattr(v, field_name)
-                field_name = None
+                v = getattr(v, v._meta.pk.name)
         except AttributeError:
             pass
         except exceptions.ObjectDoesNotExist:
@@ -901,8 +890,6 @@ class ForeignKey(RelatedField, Field):
         # don't get a related descriptor.
         if not self.rel.is_hidden():
             setattr(cls, related.get_accessor_name(), ForeignRelatedObjectsDescriptor(related))
-            if self.rel.limit_choices_to:
-                cls._meta.related_fkey_lookups.append(self.rel.limit_choices_to)
         if self.rel.field_name is None:
             self.rel.field_name = cls._meta.pk.name
 
@@ -1127,11 +1114,6 @@ class ManyToManyField(RelatedField, Field):
 
         self.m2m_field_name = curry(self._get_m2m_attr, related, 'name')
         self.m2m_reverse_field_name = curry(self._get_m2m_reverse_attr, related, 'name')
-
-        get_m2m_rel = curry(self._get_m2m_attr, related, 'rel')
-        self.m2m_target_field_name = lambda: get_m2m_rel().field_name
-        get_m2m_reverse_rel = curry(self._get_m2m_reverse_attr, related, 'rel')
-        self.m2m_reverse_target_field_name = lambda: get_m2m_reverse_rel().field_name
 
     def set_attributes_from_rel(self):
         pass

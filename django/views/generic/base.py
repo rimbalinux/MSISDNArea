@@ -8,7 +8,6 @@ from django.utils.decorators import classonlymethod
 
 logger = getLogger('django.request')
 
-
 class View(object):
     """
     Intentionally simple parent class for all views. Only implements
@@ -102,9 +101,7 @@ class TemplateResponseMixin(object):
         a list. May not be called if render_to_response is overridden.
         """
         if self.template_name is None:
-            raise ImproperlyConfigured(
-                "TemplateResponseMixin requires either a definition of "
-                "'template_name' or an implementation of 'get_template_names()'")
+            return []
         else:
             return [self.template_name]
 

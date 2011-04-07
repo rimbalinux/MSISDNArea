@@ -13,7 +13,6 @@ from django.conf import settings
 from django.core.urlresolvers import get_callable
 from django.utils.cache import patch_vary_headers
 from django.utils.hashcompat import md5_constructor
-from django.utils.http import same_origin
 from django.utils.log import getLogger
 from django.utils.safestring import mark_safe
 from django.utils.crypto import constant_time_compare
@@ -102,7 +101,6 @@ class CsrfViewMiddleware(object):
         return _get_failure_view()(request, reason=reason)
 
     def process_view(self, request, callback, callback_args, callback_kwargs):
-
         if getattr(request, 'csrf_processing_done', False):
             return None
 
@@ -136,6 +134,31 @@ class CsrfViewMiddleware(object):
                 # any branches that call reject()
                 return self._accept(request)
 
+            if request.is_ajax():
+                # .is_ajax() is based on the presence of X-Requested-With.  In
+                # the context of a browser, this can only be sent if using
+                # XmlHttpRequest.  Browsers implement careful policies for
+                # XmlHttpRequest:
+                #
+                #  * Normally, only same-domain requests are allowed.
+                #
+                #  * Some browsers (e.g. Firefox 3.5 and later) relax this
+                #    carefully:
+                #
+                #    * if it is a 'simple' GET or POST request (which can
+                #      include no custom headers), it is allowed to be cross
+                #      domain.  These requests will not be recognized as AJAX.
+                #
+                #    * if a 'preflight' check with the server confirms that the
+                #      server is expecting and allows the request, cross domain
+                #      requests even with custom headers are allowed. These
+                #      requests will be recognized as AJAX, but can only get
+                #      through when the developer has specifically opted in to
+                #      allowing the cross-domain POST request.
+                #
+                # So in all cases, it is safe to allow these requests through.
+                return self._accept(request)
+
             if request.is_secure():
                 # Suppose user visits http://example.com/
                 # An active network attacker,(man-in-the-middle, MITM) sends a
@@ -154,7 +177,7 @@ class CsrfViewMiddleware(object):
                 # we can use strict Referer checking.
                 referer = request.META.get('HTTP_REFERER')
                 if referer is None:
-                    logger.warning('Forbidden (%s): %s' % (REASON_NO_REFERER, request.path),
+                    logger.warning('Forbidden (%s): %s' % (REASON_NO_COOKIE, request.path),
                         extra={
                             'status_code': 403,
                             'request': request,
@@ -162,9 +185,10 @@ class CsrfViewMiddleware(object):
                     )
                     return self._reject(request, REASON_NO_REFERER)
 
-                # Note that request.get_host() includes the port
+                # The following check ensures that the referer is HTTPS,
+                # the domains match and the ports match - the same origin policy.
                 good_referer = 'https://%s/' % request.get_host()
-                if not same_origin(referer, good_referer):
+                if not referer.startswith(good_referer):
                     reason = REASON_BAD_REFERER % (referer, good_referer)
                     logger.warning('Forbidden (%s): %s' % (reason, request.path),
                         extra={
@@ -198,10 +222,6 @@ class CsrfViewMiddleware(object):
 
             # check incoming token
             request_csrf_token = request.POST.get('csrfmiddlewaretoken', '')
-            if request_csrf_token == "":
-                # Fall back to X-CSRFToken, to make things easier for AJAX
-                request_csrf_token = request.META.get('HTTP_X_CSRFTOKEN', '')
-
             if not constant_time_compare(request_csrf_token, csrf_token):
                 if cookie_is_new:
                     # probably a problem setting the CSRF cookie

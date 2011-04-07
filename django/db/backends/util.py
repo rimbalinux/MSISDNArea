@@ -5,28 +5,12 @@ from time import time
 from django.utils.hashcompat import md5_constructor
 from django.utils.log import getLogger
 
-
 logger = getLogger('django.db.backends')
 
-
-class CursorWrapper(object):
+class CursorDebugWrapper(object):
     def __init__(self, cursor, db):
         self.cursor = cursor
-        self.db = db
-
-    def __getattr__(self, attr):
-        if self.db.is_managed():
-            self.db.set_dirty()
-        if attr in self.__dict__:
-            return self.__dict__[attr]
-        else:
-            return getattr(self.cursor, attr)
-
-    def __iter__(self):
-        return iter(self.cursor)
-
-
-class CursorDebugWrapper(CursorWrapper):
+        self.db = db # Instance of a BaseDatabaseWrapper subclass
 
     def execute(self, sql, params=()):
         start = time()
@@ -59,6 +43,14 @@ class CursorDebugWrapper(CursorWrapper):
                 extra={'duration':duration, 'sql':sql, 'params':param_list}
             )
 
+    def __getattr__(self, attr):
+        if attr in self.__dict__:
+            return self.__dict__[attr]
+        else:
+            return getattr(self.cursor, attr)
+
+    def __iter__(self):
+        return iter(self.cursor)
 
 ###############################################
 # Converters from database (string) to Python #

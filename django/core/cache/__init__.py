@@ -75,21 +75,11 @@ def parse_backend_uri(backend_uri):
     return scheme, host, params
 
 if not settings.CACHES:
-    legacy_backend = getattr(settings, 'CACHE_BACKEND', None)
-    if legacy_backend:
-        import warnings
-        warnings.warn(
-            "settings.CACHE_* is deprecated; use settings.CACHES instead.",
-            PendingDeprecationWarning
-        )
-    else:
-        # The default cache setting is put here so that we
-        # can differentiate between a user who has provided
-        # an explicit CACHE_BACKEND of locmem://, and the
-        # default value. When the deprecation cycle has completed,
-        # the default can be restored to global_settings.py
-        settings.CACHE_BACKEND = 'locmem://'
-
+    import warnings
+    warnings.warn(
+        "settings.CACHE_* is deprecated; use settings.CACHES instead.",
+        PendingDeprecationWarning
+    )
     # Mapping for new-style cache backend api
     backend_classes = {
         'memcached': 'memcached.CacheClass',
@@ -101,8 +91,6 @@ if not settings.CACHES:
     engine, host, params = parse_backend_uri(settings.CACHE_BACKEND)
     if engine in backend_classes:
         engine = 'django.core.cache.backends.%s' % backend_classes[engine]
-    else:
-        engine = '%s.CacheClass' % engine
     defaults = {
         'BACKEND': engine,
         'LOCATION': host,
@@ -122,7 +110,6 @@ def parse_backend_conf(backend, **kwargs):
     conf = settings.CACHES.get(backend, None)
     if conf is not None:
         args = conf.copy()
-        args.update(kwargs)
         backend = args.pop('BACKEND')
         location = args.pop('LOCATION', '')
         return backend, location, args

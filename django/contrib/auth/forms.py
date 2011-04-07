@@ -109,13 +109,10 @@ class PasswordResetForm(forms.Form):
 
     def clean_email(self):
         """
-        Validates that an active user exists with the given e-mail address.
+        Validates that a user exists with the given e-mail address.
         """
         email = self.cleaned_data["email"]
-        self.users_cache = User.objects.filter(
-                                email__iexact=email,
-                                is_active=True
-                            )
+        self.users_cache = User.objects.filter(email__iexact=email)
         if len(self.users_cache) == 0:
             raise forms.ValidationError(_("That e-mail address doesn't have an associated user account. Are you sure you've registered?"))
         return email

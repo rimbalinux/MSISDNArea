@@ -31,9 +31,3 @@ class NonrelDatabaseCreation(BaseDatabaseCreation):
         'BlobField':         'blob',
         'RawField':          'raw',
     }
-
-    def sql_create_model(self, *args, **kwargs):
-        return [], {}
-
-    def sql_indexes_for_model(self, *args, **kwargs):
-        return []

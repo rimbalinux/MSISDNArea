@@ -14,6 +14,10 @@ or implicit commits or rollbacks.
 import sys
 
 try:
+    import thread
+except ImportError:
+    import dummy_thread as thread
+try:
     from functools import wraps
 except ImportError:
     from django.utils.functional import wraps  # Python 2.4 fallback.
@@ -42,7 +46,15 @@ def enter_transaction_management(managed=True, using=None):
     if using is None:
         using = DEFAULT_DB_ALIAS
     connection = connections[using]
-    connection.enter_transaction_management(managed)
+
+    if connection.transaction_state:
+        connection.transaction_state.append(connection.transaction_state[-1])
+    else:
+        connection.transaction_state.append(settings.TRANSACTIONS_MANAGED)
+
+    if connection.dirty is None:
+        connection.dirty = False
+    connection._enter_transaction_management(managed)
 
 def leave_transaction_management(using=None):
     """
@@ -53,7 +65,18 @@ def leave_transaction_management(using=None):
     if using is None:
         using = DEFAULT_DB_ALIAS
     connection = connections[using]
-    connection.leave_transaction_management()
+
+    connection._leave_transaction_management(is_managed(using=using))
+    if connection.transaction_state:
+        del connection.transaction_state[-1]
+    else:
+        raise TransactionManagementError("This code isn't under transaction "
+            "management")
+    if connection.dirty:
+        rollback(using=using)
+        raise TransactionManagementError("Transaction managed block ended with "
+            "pending COMMIT/ROLLBACK")
+    connection.dirty = False
 
 def is_dirty(using=None):
     """
@@ -63,7 +86,8 @@ def is_dirty(using=None):
     if using is None:
         using = DEFAULT_DB_ALIAS
     connection = connections[using]
-    return connection.is_dirty()
+
+    return connection.dirty
 
 def set_dirty(using=None):
     """
@@ -74,7 +98,12 @@ def set_dirty(using=None):
     if using is None:
         using = DEFAULT_DB_ALIAS
     connection = connections[using]
-    connection.set_dirty()
+
+    if connection.dirty is not None:
+        connection.dirty = True
+    else:
+        raise TransactionManagementError("This code isn't under transaction "
+            "management")
 
 def set_clean(using=None):
     """
@@ -85,13 +114,18 @@ def set_clean(using=None):
     if using is None:
         using = DEFAULT_DB_ALIAS
     connection = connections[using]
-    connection.set_clean()
+
+    if connection.dirty is not None:
+        connection.dirty = False
+    else:
+        raise TransactionManagementError("This code isn't under transaction management")
+    clean_savepoints(using=using)
 
 def clean_savepoints(using=None):
     if using is None:
         using = DEFAULT_DB_ALIAS
     connection = connections[using]
-    connection.clean_savepoints()
+    connection.savepoint_state = 0
 
 def is_managed(using=None):
     """
@@ -100,7 +134,9 @@ def is_managed(using=None):
     if using is None:
         using = DEFAULT_DB_ALIAS
     connection = connections[using]
-    return connection.is_managed()
+    if connection.transaction_state:
+        return connection.transaction_state[-1]
+    return settings.TRANSACTIONS_MANAGED
 
 def managed(flag=True, using=None):
     """
@@ -112,7 +148,16 @@ def managed(flag=True, using=None):
     if using is None:
         using = DEFAULT_DB_ALIAS
     connection = connections[using]
-    connection.managed(flag)
+
+    top = connection.transaction_state
+    if top:
+        top[-1] = flag
+        if not flag and is_dirty(using=using):
+            connection._commit()
+            set_clean(using=using)
+    else:
+        raise TransactionManagementError("This code isn't under transaction "
+            "management")
 
 def commit_unless_managed(using=None):
     """
@@ -121,7 +166,11 @@ def commit_unless_managed(using=None):
     if using is None:
         using = DEFAULT_DB_ALIAS
     connection = connections[using]
-    connection.commit_unless_managed()
+    if not is_managed(using=using):
+        connection._commit()
+        clean_savepoints(using=using)
+    else:
+        set_dirty(using=using)
 
 def rollback_unless_managed(using=None):
     """
@@ -130,7 +179,10 @@ def rollback_unless_managed(using=None):
     if using is None:
         using = DEFAULT_DB_ALIAS
     connection = connections[using]
-    connection.rollback_unless_managed()
+    if not is_managed(using=using):
+        connection._rollback()
+    else:
+        set_dirty(using=using)
 
 def commit(using=None):
     """
@@ -139,7 +191,8 @@ def commit(using=None):
     if using is None:
         using = DEFAULT_DB_ALIAS
     connection = connections[using]
-    connection.commit()
+    connection._commit()
+    set_clean(using=using)
 
 def rollback(using=None):
     """
@@ -148,7 +201,8 @@ def rollback(using=None):
     if using is None:
         using = DEFAULT_DB_ALIAS
     connection = connections[using]
-    connection.rollback()
+    connection._rollback()
+    set_clean(using=using)
 
 def savepoint(using=None):
     """
@@ -159,7 +213,14 @@ def savepoint(using=None):
     if using is None:
         using = DEFAULT_DB_ALIAS
     connection = connections[using]
-    return connection.savepoint()
+    thread_ident = thread.get_ident()
+
+    connection.savepoint_state += 1
+
+    tid = str(thread_ident).replace('-', '')
+    sid = "s%s_x%d" % (tid, connection.savepoint_state)
+    connection._savepoint(sid)
+    return sid
 
 def savepoint_rollback(sid, using=None):
     """
@@ -169,7 +230,9 @@ def savepoint_rollback(sid, using=None):
     if using is None:
         using = DEFAULT_DB_ALIAS
     connection = connections[using]
-    connection.savepoint_rollback(sid)
+
+    if connection.savepoint_state:
+        connection._savepoint_rollback(sid)
 
 def savepoint_commit(sid, using=None):
     """
@@ -179,7 +242,9 @@ def savepoint_commit(sid, using=None):
     if using is None:
         using = DEFAULT_DB_ALIAS
     connection = connections[using]
-    connection.savepoint_commit(sid)
+
+    if connection.savepoint_state:
+        connection._savepoint_commit(sid)
 
 ##############
 # DECORATORS #

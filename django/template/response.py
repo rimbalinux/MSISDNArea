@@ -19,29 +19,11 @@ class SimpleTemplateResponse(HttpResponse):
         # a final response.
         self._is_rendered = False
 
-        self._post_render_callbacks = []
-
         # content argument doesn't make sense here because it will be replaced
         # with rendered template so we always pass empty string in order to
         # prevent errors and provide shorter signature.
         super(SimpleTemplateResponse, self).__init__('', mimetype, status,
                                                      content_type)
-
-    def __getstate__(self):
-        """Pickling support function.
-
-        Ensures that the object can't be pickled before it has been
-        rendered, and that the pickled state only includes rendered
-        data, not the data used to construct the response.
-        """
-        obj_dict = self.__dict__.copy()
-        if not self._is_rendered:
-            raise ContentNotRenderedError('The response content must be rendered before it can be pickled.')
-        del obj_dict['template_name']
-        del obj_dict['context_data']
-        del obj_dict['_post_render_callbacks']
-
-        return obj_dict
 
     def resolve_template(self, template):
         "Accepts a template object, path-to-template or list of paths"
@@ -75,16 +57,6 @@ class SimpleTemplateResponse(HttpResponse):
         content = template.render(context)
         return content
 
-    def add_post_render_callback(self, callback):
-        """Add a new post-rendering callback.
-
-        If the response has already been rendered, invoke the callback immediately.
-        """
-        if self._is_rendered:
-            callback(self)
-        else:
-            self._post_render_callbacks.append(callback)
-
     def render(self):
         """Render (thereby finalizing) the content of the response.
 
@@ -94,8 +66,6 @@ class SimpleTemplateResponse(HttpResponse):
         """
         if not self._is_rendered:
             self._set_content(self.rendered_content)
-            for post_callback in self._post_render_callbacks:
-                post_callback(self)
         return self
 
     is_rendered = property(lambda self: self._is_rendered)
@@ -111,7 +81,7 @@ class SimpleTemplateResponse(HttpResponse):
         return super(SimpleTemplateResponse, self)._get_content()
 
     def _set_content(self, value):
-        "Sets the content for the response"
+        "Overrides rendered content, unless you later call render()"
         super(SimpleTemplateResponse, self)._set_content(value)
         self._is_rendered = True
 
@@ -131,20 +101,6 @@ class TemplateResponse(SimpleTemplateResponse):
         super(TemplateResponse, self).__init__(
             template, context, mimetype, status, content_type)
 
-    def __getstate__(self):
-        """Pickling support function.
-
-        Ensures that the object can't be pickled before it has been
-        rendered, and that the pickled state only includes rendered
-        data, not the data used to construct the response.
-        """
-        obj_dict = super(TemplateResponse, self).__getstate__()
-
-        del obj_dict['_request']
-        del obj_dict['_current_app']
-
-        return obj_dict
-
     def resolve_context(self, context):
         """Convert context data into a full RequestContext object
         (assuming it isn't already a Context object).
@@ -153,5 +109,3 @@ class TemplateResponse(SimpleTemplateResponse):
             return context
         else:
             return RequestContext(self._request, context, current_app=self._current_app)
-
-

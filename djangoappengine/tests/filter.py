@@ -1,7 +1,6 @@
 from ..db.utils import get_cursor, set_cursor
 from .testmodels import FieldsWithOptionsModel, EmailModel, DateTimeModel, \
     OrderedModel, BlobModel
-from django.db import models
 from django.db.models import Q
 from django.db.utils import DatabaseError
 from django.test import TestCase
@@ -280,12 +279,13 @@ class FilterTest(TestCase):
         for item in results:
             query = FieldsWithOptionsModel.objects.all()[:1]
             if cursor is not None:
-                query = set_cursor(query, cursor)
+                set_cursor(query, cursor)
             next = query[0]
             self.assertEqual(next.pk, item.pk)
             cursor = get_cursor(query)
-        query = set_cursor(FieldsWithOptionsModel.objects.all(), cursor)
-        self.assertEqual(list(query[:1]), [])
+        query = FieldsWithOptionsModel.objects.all()[:1]
+        set_cursor(query, cursor)
+        self.assertEqual(list(query), [])
 
     def test_Q_objects(self):
         self.assertEquals([entity.email for entity in
@@ -323,22 +323,6 @@ class FilterTest(TestCase):
                            email__in=['app-engine@scholardocs.com',
                                       'rasengan@naruto.com'])],
                           ['app-engine@scholardocs.com', 'rasengan@naruto.com'])
-
-    def test_in_with_order_by(self):
-        class Post(models.Model):
-            writer = models.IntegerField()
-            order = models.IntegerField()
-        Post(writer=1, order=1).save()
-        Post(writer=1, order=2).save()
-        Post(writer=1, order=3).save()
-        Post(writer=2, order=4).save()
-        Post(writer=2, order=5).save()
-        posts = Post.objects.filter(writer__in= [1,2]).order_by('order')
-        orders = [post.order for post in posts]
-        self.assertEqual(orders, range(1, 6))
-        posts = Post.objects.filter(writer__in= [1,2]).order_by('-order')
-        orders = [post.order for post in posts]
-        self.assertEqual(orders, range(5, 0, -1))
 
     def test_inequality(self):
         self.assertEquals([entity.email for entity in

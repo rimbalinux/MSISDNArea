@@ -55,10 +55,6 @@ class Options(object):
         self.abstract_managers = []
         self.concrete_managers = []
 
-        # List of all lookups defined in ForeignKey 'limit_choices_to' options
-        # from *other* models. Needed for some admin checks. Internal use only.
-        self.related_fkey_lookups = []
-
     def contribute_to_class(self, cls, name):
         from django.db import connection
         from django.db.backends.util import truncate_name
@@ -123,12 +119,6 @@ class Options(object):
                 # Promote the first parent link in lieu of adding yet another
                 # field.
                 field = self.parents.value_for_index(0)
-                # Look for a local field with the same name as the
-                # first parent link. If a local field has already been
-                # created, use it instead of promoting the parent
-                already_created = [fld for fld in self.local_fields if fld.name == field.name]
-                if already_created:
-                    field = already_created[0]
                 field.primary_key = True
                 self.setup_pk(field)
             else:
@@ -381,7 +371,7 @@ class Options(object):
         cache = SortedDict()
         parent_list = self.get_parent_list()
         for parent in self.parents:
-            for obj, model in parent._meta.get_all_related_objects_with_model(include_hidden=True):
+            for obj, model in parent._meta.get_all_related_objects_with_model():
                 if (obj.field.creation_counter < 0 or obj.field.rel.parent_link) and obj.model not in parent_list:
                     continue
                 if not model:

@@ -9,7 +9,8 @@ from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
 from django.utils.encoding import force_unicode, smart_unicode, smart_str
 from django.utils.translation import ungettext
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, NoReverseMatch
+from django.utils.datastructures import SortedDict
 
 
 def quote(s):
@@ -103,16 +104,13 @@ def get_deleted_objects(objs, opts, user, admin_site, using):
 
     to_delete = collector.nested(format_callback)
 
-    protected = [format_callback(obj) for obj in collector.protected]
-
-    return to_delete, perms_needed, protected
+    return to_delete, perms_needed
 
 
 class NestedObjects(Collector):
     def __init__(self, *args, **kwargs):
         super(NestedObjects, self).__init__(*args, **kwargs)
         self.edges = {} # {from_instance: [to_instances]}
-        self.protected = set()
 
     def add_edge(self, source, target):
         self.edges.setdefault(source, []).append(target)
@@ -123,10 +121,7 @@ class NestedObjects(Collector):
                 self.add_edge(getattr(obj, source_attr), obj)
             else:
                 self.add_edge(None, obj)
-        try:
-            return super(NestedObjects, self).collect(objs, source_attr=source_attr, **kwargs)
-        except models.ProtectedError, e:
-            self.protected.update(e.protected_objects)
+        return super(NestedObjects, self).collect(objs, source_attr=source_attr, **kwargs)
 
     def related_objects(self, related, objs):
         qs = super(NestedObjects, self).related_objects(related, objs)
@@ -248,7 +243,7 @@ def label_for_field(name, model, model_admin=None, return_attr=False):
             else:
                 message = "Unable to lookup '%s' on %s" % (name, model._meta.object_name)
                 if model_admin:
-                    message += " or %s" % (model_admin.__class__.__name__,)
+                    message += " or %s" % (model_admin.__name__,)
                 raise AttributeError(message)
 
             if hasattr(attr, "short_description"):
@@ -264,13 +259,6 @@ def label_for_field(name, model, model_admin=None, return_attr=False):
         return (label, attr)
     else:
         return label
-
-def help_text_for_field(name, model):
-    try:
-        help_text = model._meta.get_field_by_name(name)[0].help_text
-    except models.FieldDoesNotExist:
-        help_text = ""
-    return smart_unicode(help_text)
 
 
 def display_for_field(value, field):

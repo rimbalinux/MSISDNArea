@@ -1,5 +1,6 @@
 import os
 from django.conf import settings
+from django.db import models
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.storage import default_storage, Storage, FileSystemStorage
 from django.utils.datastructures import SortedDict
@@ -10,7 +11,7 @@ from django.utils._os import safe_join
 from django.contrib.staticfiles import utils
 from django.contrib.staticfiles.storage import AppStaticStorage
 
-_finders = SortedDict()
+_finders = {}
 
 
 class BaseFinder(object):
@@ -31,8 +32,7 @@ class BaseFinder(object):
     def list(self, ignore_patterns=[]):
         """
         Given an optional list of paths to ignore, this should return
-        a two item iterable consisting of the relative path and storage
-        instance.
+        a three item iterable with path, prefix and a storage instance.
         """
         raise NotImplementedError()
 
@@ -43,29 +43,22 @@ class FileSystemFinder(BaseFinder):
     to locate files.
     """
     def __init__(self, apps=None, *args, **kwargs):
-        # List of locations with static files
-        self.locations = []
         # Maps dir paths to an appropriate storage instance
         self.storages = SortedDict()
-        if not isinstance(settings.STATICFILES_DIRS, (list, tuple)):
-            raise ImproperlyConfigured(
-                "Your STATICFILES_DIRS setting is not a tuple or list; "
-                "perhaps you forgot a trailing comma?")
+        # Set of locations with static files
+        self.locations = set()
         for root in settings.STATICFILES_DIRS:
             if isinstance(root, (list, tuple)):
                 prefix, root = root
             else:
                 prefix = ''
-            if os.path.abspath(settings.STATIC_ROOT) == os.path.abspath(root):
-                raise ImproperlyConfigured(
-                    "The STATICFILES_DIRS setting should "
-                    "not contain the STATIC_ROOT setting")
-            if (prefix, root) not in self.locations:
-                self.locations.append((prefix, root))
+            self.locations.add((prefix, root))
+        # Don't initialize multiple storages for the same location
         for prefix, root in self.locations:
             filesystem_storage = FileSystemStorage(location=root)
             filesystem_storage.prefix = prefix
             self.storages[root] = filesystem_storage
+
         super(FileSystemFinder, self).__init__(*args, **kwargs)
 
     def find(self, path, all=False):

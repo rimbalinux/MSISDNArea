@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.db.models.fields import NOT_PROVIDED
 from django.db.models.sql import aggregates as sqlaggregates
 from django.db.models.sql.compiler import SQLCompiler
 from django.db.models.sql.constants import LOOKUP_SEP, MULTI, SINGLE
@@ -247,13 +246,11 @@ class NonrelCompiler(SQLCompiler):
     def _make_result(self, entity, fields):
         result = []
         for field in fields:
-            value = entity.get(field.column, NOT_PROVIDED)
-            if value is NOT_PROVIDED:
-                value = field.get_default()
-            if value is None and not field.null:
+            if not field.null and entity.get(field.column,
+                    field.get_default()) is None:
                 raise DatabaseError("Non-nullable field %s can't be None!" % field.name)
-            value = self.convert_value_from_db(field.db_type(connection=self.connection), value)
-            result.append(value)
+            result.append(self.convert_value_from_db(field.db_type(
+                connection=self.connection), entity.get(field.column, field.get_default())))
         return result
 
     def check_query(self):
@@ -299,11 +296,6 @@ class NonrelCompiler(SQLCompiler):
         only_load = self.deferred_to_columns()
         if only_load:
             db_table = self.query.model._meta.db_table
-            only_load = dict((k, v) for k, v in only_load.items()
-                             if v or k == db_table)
-            if len(only_load.keys()) > 1:
-                raise DatabaseError('Multi-table inheritance is not supported '
-                                    'by non-relational DBs.' + repr(only_load))
             fields = [f for f in fields if db_table in only_load and
                       f.column in only_load[db_table]]
 

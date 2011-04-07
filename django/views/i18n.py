@@ -7,7 +7,7 @@ from django.utils import importlib
 from django.utils.translation import check_for_language, activate, to_locale, get_language
 from django.utils.text import javascript_quote
 from django.utils.encoding import smart_unicode
-from django.utils.formats import get_format_modules, get_format
+from django.utils.formats import get_format_modules
 
 def set_language(request):
     """
@@ -49,7 +49,10 @@ def get_formats():
     result = {}
     for module in [settings] + get_format_modules(reverse=True):
         for attr in FORMAT_SETTINGS:
-            result[attr] = get_format(attr)
+            try:
+                result[attr] = getattr(module, attr)
+            except AttributeError:
+                pass
     src = []
     for k, v in result.items():
         if isinstance(v, (basestring, int)):
@@ -193,15 +196,11 @@ def javascript_catalog(request, domain='djangojs', packages=None):
     paths = []
     en_selected = locale.startswith('en')
     en_catalog_missing = True
-    # paths of requested packages
+    # first load all english languages files for defaults
     for package in packages:
         p = importlib.import_module(package)
         path = os.path.join(os.path.dirname(p.__file__), 'locale')
         paths.append(path)
-    # add the filesystem paths listed in the LOCALE_PATHS setting
-    paths.extend(list(reversed(settings.LOCALE_PATHS)))
-    # first load all english languages files for defaults
-    for path in paths:
         try:
             catalog = gettext_module.translation(domain, path, ['en'])
             t.update(catalog._catalog)
@@ -279,3 +278,4 @@ def javascript_catalog(request, domain='djangojs', packages=None):
     src.append(LibFormatFoot)
     src = ''.join(src)
     return http.HttpResponse(src, 'text/javascript')
+

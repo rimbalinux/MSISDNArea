@@ -149,19 +149,9 @@ def floatformat(text, arg=-1):
     if p == 0:
         exp = Decimal(1)
     else:
-        exp = Decimal(u'1.0') / (Decimal(10) ** abs(p))
+        exp = Decimal('1.0') / (Decimal(10) ** abs(p))
     try:
-        # Avoid conversion to scientific notation by accessing `sign`, `digits`
-        # and `exponent` from `Decimal.as_tuple()` directly.
-        sign, digits, exponent = d.quantize(exp, ROUND_HALF_UP).as_tuple()
-        digits = [unicode(digit) for digit in reversed(digits)]
-        while len(digits) <= abs(exponent):
-            digits.append(u'0')
-        digits.insert(-exponent, u'.')
-        if sign:
-            digits.append(u'-')
-        number = u''.join(reversed(digits))
-        return mark_safe(formats.number_format(number, abs(p)))
+        return mark_safe(formats.number_format(u'%s' % str(d.quantize(exp, ROUND_HALF_UP)), abs(p)))
     except InvalidOperation:
         return input_val
 floatformat.is_safe = True
@@ -470,7 +460,10 @@ def dictsort(value, arg):
     Takes a list of dicts, returns that list sorted by the property given in
     the argument.
     """
-    return sorted(value, key=Variable(arg).resolve)
+    var_resolve = Variable(arg).resolve
+    decorated = [(var_resolve(item), item) for item in value]
+    decorated.sort()
+    return [item[1] for item in decorated]
 dictsort.is_safe = False
 
 def dictsortreversed(value, arg):
@@ -478,7 +471,11 @@ def dictsortreversed(value, arg):
     Takes a list of dicts, returns that list sorted in reverse order by the
     property given in the argument.
     """
-    return sorted(value, key=Variable(arg).resolve, reverse=True)
+    var_resolve = Variable(arg).resolve
+    decorated = [(var_resolve(item), item) for item in value]
+    decorated.sort()
+    decorated.reverse()
+    return [item[1] for item in decorated]
 dictsortreversed.is_safe = False
 
 def first(value):
@@ -802,21 +799,19 @@ def filesizeformat(bytes):
     try:
         bytes = float(bytes)
     except (TypeError,ValueError,UnicodeDecodeError):
-        return ungettext("%(size)d byte", "%(size)d bytes", 0) % {'size': 0}
-
-    filesize_number_format = lambda value: formats.number_format(round(value, 1), 1)
+        return u"0 bytes"
 
     if bytes < 1024:
         return ungettext("%(size)d byte", "%(size)d bytes", bytes) % {'size': bytes}
     if bytes < 1024 * 1024:
-        return ugettext("%s KB") % filesize_number_format(bytes / 1024)
+        return ugettext("%.1f KB") % (bytes / 1024)
     if bytes < 1024 * 1024 * 1024:
-        return ugettext("%s MB") % filesize_number_format(bytes / (1024 * 1024))
+        return ugettext("%.1f MB") % (bytes / (1024 * 1024))
     if bytes < 1024 * 1024 * 1024 * 1024:
-        return ugettext("%s GB") % filesize_number_format(bytes / (1024 * 1024 * 1024))
+        return ugettext("%.1f GB") % (bytes / (1024 * 1024 * 1024))
     if bytes < 1024 * 1024 * 1024 * 1024 * 1024:
-        return ugettext("%s TB") % filesize_number_format(bytes / (1024 * 1024 * 1024 * 1024))
-    return ugettext("%s PB") % filesize_number_format(bytes / (1024 * 1024 * 1024 * 1024 * 1024))
+        return ugettext("%.1f TB") % (bytes / (1024 * 1024 * 1024 * 1024))
+    return ugettext("%.1f PB") % (bytes / (1024 * 1024 * 1024 * 1024 * 1024))
 filesizeformat.is_safe = True
 
 def pluralize(value, arg=u's'):

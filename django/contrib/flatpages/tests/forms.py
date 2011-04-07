@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.contrib.flatpages.admin import FlatpageForm
 from django.test import TestCase
 
@@ -7,7 +6,7 @@ class FlatpageAdminFormTests(TestCase):
         self.form_data = {
             'title': "A test page",
             'content': "This is a test",
-            'sites': [settings.SITE_ID],
+            'sites': [1],
         }
 
     def test_flatpage_admin_form_url_validation(self):

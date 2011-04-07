@@ -1,4 +1,6 @@
-import unittest as real_unittest
+import sys
+import signal
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import get_app, get_apps
@@ -114,7 +116,7 @@ def build_test(label):
             TestClass = getattr(test_module, parts[1], None)
 
     try:
-        if issubclass(TestClass, (unittest.TestCase, real_unittest.TestCase)):
+        if issubclass(TestClass, unittest.TestCase):
             if len(parts) == 2: # label is app.TestClass
                 try:
                     return unittest.TestLoader().loadTestsFromTestCase(TestClass)
@@ -201,7 +203,7 @@ def dependency_ordered(test_databases, dependencies):
         deferred = []
 
         while test_databases:
-            signature, (db_name, aliases) = test_databases.pop()
+            signature, aliases = test_databases.pop()
             dependencies_satisfied = True
             for alias in aliases:
                 if alias in dependencies:
@@ -215,10 +217,10 @@ def dependency_ordered(test_databases, dependencies):
                     resolved_databases.add(alias)
 
             if dependencies_satisfied:
-                ordered_test_databases.append((signature, (db_name, aliases)))
+                ordered_test_databases.append((signature, aliases))
                 changed = True
             else:
-                deferred.append((signature, (db_name, aliases)))
+                deferred.append((signature, aliases))
 
         if not changed:
             raise ImproperlyConfigured("Circular dependency in TEST_DEPENDENCIES")
@@ -274,11 +276,12 @@ class DjangoTestSuiteRunner(object):
                 # Store a tuple with DB parameters that uniquely identify it.
                 # If we have two aliases with the same values for that tuple,
                 # we only need to create the test database once.
-                item = test_databases.setdefault(
-                    connection.creation.test_db_signature(),
-                    (connection.settings_dict['NAME'], [])
-                )
-                item[1].append(alias)
+                test_databases.setdefault((
+                        connection.settings_dict['HOST'],
+                        connection.settings_dict['PORT'],
+                        connection.settings_dict['ENGINE'],
+                        connection.settings_dict['NAME'],
+                    ), []).append(alias)
 
                 if 'TEST_DEPENDENCIES' in connection.settings_dict:
                     dependencies[alias] = connection.settings_dict['TEST_DEPENDENCIES']
@@ -289,7 +292,7 @@ class DjangoTestSuiteRunner(object):
         # Second pass -- actually create the databases.
         old_names = []
         mirrors = []
-        for signature, (db_name, aliases) in dependency_ordered(test_databases.items(), dependencies):
+        for (host, port, engine, db_name), aliases in dependency_ordered(test_databases.items(), dependencies):
             # Actually create the database for the first connection
             connection = connections[aliases[0]]
             old_names.append((connection, db_name, True))

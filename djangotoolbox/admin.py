@@ -12,7 +12,6 @@ class UserForm(forms.ModelForm):
 class CustomUserAdmin(UserAdmin):
     fieldsets = None
     form = UserForm
-    search_fields = ('=username',)
 
 admin.site.unregister(User)
 admin.site.unregister(Group)

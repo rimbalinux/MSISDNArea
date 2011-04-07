@@ -1,5 +1,4 @@
 import re
-import urllib2
 import urlparse
 
 from django.core.exceptions import ValidationError
@@ -39,14 +38,10 @@ class RegexValidator(object):
         if not self.regex.search(smart_unicode(value)):
             raise ValidationError(self.message, code=self.code)
 
-class HeadRequest(urllib2.Request):
-    def get_method(self):
-        return "HEAD"
-
 class URLValidator(RegexValidator):
     regex = re.compile(
-        r'^(?:http|ftp)s?://' # http:// or https://
-        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...
+        r'^https?://' # http:// or https://
+        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|' #domain...
         r'localhost|' #localhost...
         r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})' # ...or ip
         r'(?::\d+)?' # optional port
@@ -77,6 +72,7 @@ class URLValidator(RegexValidator):
             url = value
 
         if self.verify_exists:
+            import urllib2
             headers = {
                 "Accept": "text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5",
                 "Accept-Language": "en-us,en;q=0.5",
@@ -84,27 +80,13 @@ class URLValidator(RegexValidator):
                 "Connection": "close",
                 "User-Agent": self.user_agent,
             }
-            url = url.encode('utf-8')
-            broken_error = ValidationError(
-                _(u'This URL appears to be a broken link.'), code='invalid_link')
             try:
-                req = HeadRequest(url, None, headers)
+                req = urllib2.Request(url, None, headers)
                 u = urllib2.urlopen(req)
             except ValueError:
                 raise ValidationError(_(u'Enter a valid URL.'), code='invalid')
-            except urllib2.HTTPError, e:
-                if e.code in (405, 501):
-                    # Try a GET request (HEAD refused)
-                    # See also: http://www.w3.org/Protocols/rfc2616/rfc2616.html
-                    try:
-                        req = urllib2.Request(url, None, headers)
-                        u = urllib2.urlopen(req)
-                    except:
-                        raise broken_error
-                else:
-                    raise broken_error
             except: # urllib2.URLError, httplib.InvalidURL, etc.
-                raise broken_error
+                raise ValidationError(_(u'This URL appears to be a broken link.'), code='invalid_link')
 
 
 def validate_integer(value):

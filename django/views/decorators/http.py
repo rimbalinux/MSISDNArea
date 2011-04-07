@@ -9,9 +9,10 @@ except ImportError:
 
 from calendar import timegm
 from datetime import timedelta
+from email.Utils import formatdate
 
 from django.utils.decorators import decorator_from_middleware, available_attrs
-from django.utils.http import http_date, parse_http_date_safe, parse_etags, quote_etag
+from django.utils.http import parse_etags, quote_etag
 from django.utils.log import getLogger
 from django.middleware.http import ConditionalGetMiddleware
 from django.http import HttpResponseNotAllowed, HttpResponseNotModified, HttpResponse
@@ -78,8 +79,6 @@ def condition(etag_func=None, last_modified_func=None):
         def inner(request, *args, **kwargs):
             # Get HTTP request headers
             if_modified_since = request.META.get("HTTP_IF_MODIFIED_SINCE")
-            if if_modified_since:
-                if_modified_since = parse_http_date_safe(if_modified_since)
             if_none_match = request.META.get("HTTP_IF_NONE_MATCH")
             if_match = request.META.get("HTTP_IF_MATCH")
             if if_none_match or if_match:
@@ -103,7 +102,7 @@ def condition(etag_func=None, last_modified_func=None):
             if last_modified_func:
                 dt = last_modified_func(request, *args, **kwargs)
                 if dt:
-                    res_last_modified = timegm(dt.utctimetuple())
+                    res_last_modified = formatdate(timegm(dt.utctimetuple()))[:26] + 'GMT'
                 else:
                     res_last_modified = None
             else:
@@ -117,8 +116,7 @@ def condition(etag_func=None, last_modified_func=None):
                 if ((if_none_match and (res_etag in etags or
                         "*" in etags and res_etag)) and
                         (not if_modified_since or
-                            (res_last_modified and if_modified_since and
-                            res_last_modified <= if_modified_since))):
+                            res_last_modified == if_modified_since)):
                     if request.method in ("GET", "HEAD"):
                         response = HttpResponseNotModified()
                     else:
@@ -138,9 +136,9 @@ def condition(etag_func=None, last_modified_func=None):
                         }
                     )
                     response = HttpResponse(status=412)
-                elif (not if_none_match and request.method == "GET" and
-                        res_last_modified and if_modified_since and
-                        res_last_modified <= if_modified_since):
+                elif (not if_none_match and if_modified_since and
+                        request.method == "GET" and
+                        res_last_modified == if_modified_since):
                     response = HttpResponseNotModified()
 
             if response is None:
@@ -148,7 +146,7 @@ def condition(etag_func=None, last_modified_func=None):
 
             # Set relevant headers on the response if they don't already exist.
             if res_last_modified and not response.has_header('Last-Modified'):
-                response['Last-Modified'] = http_date(res_last_modified)
+                response['Last-Modified'] = res_last_modified
             if res_etag and not response.has_header('ETag'):
                 response['ETag'] = quote_etag(res_etag)
 

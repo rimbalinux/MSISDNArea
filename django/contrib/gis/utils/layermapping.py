@@ -54,8 +54,6 @@ class LayerMapping(object):
         models.TextField : OFTString,
         models.URLField : OFTString,
         USStateField : OFTString,
-        # This is a reminder that XMLField is deprecated
-        # and this needs to be removed in 1.4
         models.XMLField : OFTString,
         models.SmallIntegerField : (OFTInteger, OFTReal, OFTString),
         models.PositiveSmallIntegerField : (OFTInteger, OFTReal, OFTString),
@@ -294,10 +292,7 @@ class LayerMapping(object):
 
             if isinstance(model_field, GeometryField):
                 # Verify OGR geometry.
-                try:
-                    val = self.verify_geom(feat.geom, model_field)
-                except OGRException:
-                    raise LayerMapError('Could not retrieve geometry from feature.')
+                val = self.verify_geom(feat.geom, model_field)
             elif isinstance(model_field, models.base.ModelBase):
                 # The related _model_, not a field was passed in -- indicating
                 # another mapping for the related Model.

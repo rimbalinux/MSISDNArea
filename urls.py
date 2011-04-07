@@ -1,18 +1,19 @@
 from django.conf.urls.defaults import *
-from django.contrib import admin
-admin.autodiscover()
-from msisdnarea import msisdn
-from member import go_login, go_member, go_logout
+from blog.models import PostsSitemap
+from minicms.models import PagesSitemap
 
 handler500 = 'djangotoolbox.errorviews.server_error'
 
+sitemaps = {
+    'posts': PostsSitemap,
+    'pages': PagesSitemap,
+}
+
 urlpatterns = patterns('',
-    #('^_ah/warmup$', 'djangoappengine.views.warmup'),
-    #('^$', 'django.views.generic.simple.direct_to_template',
-    # {'template': 'home.html'}),
-    ('^$', msisdn),
-    ('^admin/', include(admin.site.urls)),
-    ('^login/', go_login),
-    ('^member/', go_member),
-    ('^logout/', go_logout),
+    ('^_ah/warmup$', 'djangoappengine.views.warmup'),
+    (r'^admin/', include('urlsadmin')),
+    (r'^blog/', include('blog.urls')),
+    (r'^sitemap\.xml$', 'django.contrib.sitemaps.views.sitemap', {'sitemaps': sitemaps}),
+    (r'^robots\.txt$', 'robots.views.robots'),
+    (r'^msisdn/', 'msisdn.views.area')
 )

@@ -92,7 +92,7 @@ class CommonMiddleware(object):
     def process_response(self, request, response):
         "Send broken link emails and calculate the Etag, if needed."
         if response.status_code == 404:
-            if settings.SEND_BROKEN_LINK_EMAILS and not settings.DEBUG:
+            if settings.SEND_BROKEN_LINK_EMAILS:
                 # If the referrer was from an internal link or a non-search-engine site,
                 # send a note to the managers.
                 domain = request.get_host()

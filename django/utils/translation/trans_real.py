@@ -67,6 +67,7 @@ class DjangoTranslation(gettext_module.GNUTranslations):
     Python 2.4.
     """
     def __init__(self, *args, **kw):
+        from django.conf import settings
         gettext_module.GNUTranslations.__init__(self, *args, **kw)
         # Starting with Python 2.4, there's a function to define
         # the output charset. Before 2.4, the output charset is
@@ -124,18 +125,18 @@ def translation(language):
 
         global _translations
 
+        loc = to_locale(lang)
+
         res = _translations.get(lang, None)
         if res is not None:
             return res
-
-        loc = to_locale(lang)
 
         def _translation(path):
             try:
                 t = gettext_module.translation('django', path, [loc], DjangoTranslation)
                 t.set_language(lang)
                 return t
-            except IOError:
+            except IOError, e:
                 return None
 
         res = _translation(globalpath)
@@ -158,21 +159,19 @@ def translation(language):
                     res.merge(t)
             return res
 
-        for appname in reversed(settings.INSTALLED_APPS):
+        for localepath in settings.LOCALE_PATHS:
+            if os.path.isdir(localepath):
+                res = _merge(localepath)
+
+        for appname in settings.INSTALLED_APPS:
             app = import_module(appname)
             apppath = os.path.join(os.path.dirname(app.__file__), 'locale')
 
             if os.path.isdir(apppath):
                 res = _merge(apppath)
 
-        localepaths = [os.path.normpath(path) for path in settings.LOCALE_PATHS]
-        if (projectpath and os.path.isdir(projectpath) and
-                os.path.normpath(projectpath) not in localepaths):
+        if projectpath and os.path.isdir(projectpath):
             res = _merge(projectpath)
-
-        for localepath in reversed(settings.LOCALE_PATHS):
-            if os.path.isdir(localepath):
-                res = _merge(localepath)
 
         if res is None:
             if fallback is not None:
@@ -336,26 +335,19 @@ def npgettext(context, singular, plural, number):
         result = do_ntranslate(singular, plural, number, 'ungettext')
     return result
 
-def all_locale_paths():
-    """
-    Returns a list of paths to user-provides languages files.
-    """
-    from django.conf import settings
-    globalpath = os.path.join(
-        os.path.dirname(sys.modules[settings.__module__].__file__), 'locale')
-    return [globalpath] + list(settings.LOCALE_PATHS)
-
 def check_for_language(lang_code):
     """
     Checks whether there is a global language file for the given language
     code. This is used to decide whether a user-provided language is
     available. This is only used for language codes from either the cookies or
-    session and during format localization.
+    session.
     """
-    for path in all_locale_paths():
-        if gettext_module.find('django', path, [to_locale(lang_code)]) is not None:
-            return True
-    return False
+    from django.conf import settings
+    globalpath = os.path.join(os.path.dirname(sys.modules[settings.__module__].__file__), 'locale')
+    if gettext_module.find('django', globalpath, [to_locale(lang_code)]) is not None:
+        return True
+    else:
+        return False
 
 def get_language_from_request(request):
     """
@@ -366,6 +358,7 @@ def get_language_from_request(request):
     """
     global _accepted
     from django.conf import settings
+    globalpath = os.path.join(os.path.dirname(sys.modules[settings.__module__].__file__), 'locale')
     supported = dict(settings.LANGUAGES)
 
     if hasattr(request, 'session'):
@@ -408,10 +401,11 @@ def get_language_from_request(request):
                 (accept_lang.split('-')[0], normalized.split('_')[0])):
             if lang.lower() not in supported:
                 continue
-            for path in all_locale_paths():
-                if os.path.exists(os.path.join(path, dirname, 'LC_MESSAGES', 'django.mo')):
-                    _accepted[normalized] = lang
-                    return lang
+            langfile = os.path.join(globalpath, dirname, 'LC_MESSAGES',
+                    'django.mo')
+            if os.path.exists(langfile):
+                _accepted[normalized] = lang
+                return lang
 
     return settings.LANGUAGE_CODE
 
@@ -435,8 +429,7 @@ def templatize(src, origin=None):
     does so by translating the Django translation tags into standard gettext
     function invocations.
     """
-    from django.template import (Lexer, TOKEN_TEXT, TOKEN_VAR, TOKEN_BLOCK,
-            TOKEN_COMMENT, TRANSLATOR_COMMENT_MARK)
+    from django.template import Lexer, TOKEN_TEXT, TOKEN_VAR, TOKEN_BLOCK, TOKEN_COMMENT
     out = StringIO()
     intrans = False
     inplural = False
@@ -447,16 +440,7 @@ def templatize(src, origin=None):
     for t in Lexer(src, origin).tokenize():
         if incomment:
             if t.token_type == TOKEN_BLOCK and t.contents == 'endcomment':
-                content = u''.join(comment)
-                translators_comment_start = None
-                for lineno, line in enumerate(content.splitlines(True)):
-                    if line.lstrip().startswith(TRANSLATOR_COMMENT_MARK):
-                        translators_comment_start = lineno
-                for lineno, line in enumerate(content.splitlines(True)):
-                    if translators_comment_start is not None and lineno >= translators_comment_start:
-                        out.write(u' # %s' % line)
-                    else:
-                        out.write(u' #\n')
+                out.write(' # %s' % ''.join(comment))
                 incomment = False
                 comment = []
             else:
