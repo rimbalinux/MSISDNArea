@@ -137,8 +137,7 @@ try:
     DBINDEXER_SITECONF = 'dbindexes'
     MIDDLEWARE_CLASSES = ('dbindexer.middleware.DBIndexerMiddleware',) + \
                          MIDDLEWARE_CLASSES
-except ImportError, e:
-    print e
+except ImportError:
     pass
 
 try:

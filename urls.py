@@ -15,5 +15,5 @@ urlpatterns = patterns('',
     (r'^blog/', include('blog.urls')),
     (r'^sitemap\.xml$', 'django.contrib.sitemaps.views.sitemap', {'sitemaps': sitemaps}),
     (r'^robots\.txt$', 'robots.views.robots'),
-    (r'^msisdn/', 'msisdn.views.area')
+    (r'^msisdn/', 'msisdn.views.area'),
 )
