@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Wilayah MSISDN{% endblock %}
+
+{% block content %}
+<h1>Wilayah MSISDN</h1>
+<form method="post" name="form1">
+    <fieldset class="module aligned">
+        <div class="form-row">
+            <div>
+                <label for="msisdn" class="required">Masukkan nomor handphone:</label>
+                <input name="msisdn" class="vTextField" value="{{ msisdn }}" />
+                <p class="help">Contoh: 08179140068, +628179140068</p>
+            </div>
+        </div>
+        <div class="form-row">
+            <h2>{{ msisdn }} {{ wilayah }}</h2>
+        </div>
+    </fieldset>
+    <div class="submit-row">
+        <input type="submit" class="form-submit" value="Lihat wilayahnya" />
+    </div>
+</form>
+{% endblock %}
+
+{% block js %}
+<script>
+    document.form1.msisdn.focus();
+</script>
+{% endblock %}

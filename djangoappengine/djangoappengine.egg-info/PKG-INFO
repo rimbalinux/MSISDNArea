@@ -1,0 +1,19 @@
+Metadata-Version: 1.0
+Name: djangoappengine
+Version: 1.0
+Summary: App Engine backends for Django-nonrel
+Home-page: http://www.allbuttonspressed.com/projects/djangoappengine
+Author: Waldemar Kornewald
+Author-email: wkornewald@gmail.com
+License: UNKNOWN
+Description: UNKNOWN
+Platform: any
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Web Environment
+Classifier: Framework :: Django
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Topic :: Software Development :: Libraries :: Application Frameworks
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: License :: OSI Approved :: BSD License
