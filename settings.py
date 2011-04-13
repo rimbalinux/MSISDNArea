@@ -56,6 +56,7 @@ INSTALLED_APPS = (
     'simplesocial',
     'redirects',
     'msisdn',
+    'user',
 )
 
 if has_djangoappengine:

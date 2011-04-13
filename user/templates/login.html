@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Wilayah MSISDN{% endblock %}
+
+{% block content %}
+<form method="post" name="form1">
+    <fieldset class="module aligned">
+        <div class="form-row">
+            <div>
+                <label for="username" class="required">Username:</label>
+                <input name="username" class="vTextField" />
+            </div>
+            <div>
+                <label for="password" class="required">Password:</label>
+                <input name="password" type="password" class="vTextField" />
+            </div>
+        </div>
+    </fieldset>
+    <div class="submit-row">
+        <input type="submit" class="form-submit" value="Login" />
+    </div>
+</form>
+{% endblock %}
+
+{% block js %}
+<script>
+    document.form1.msisdn.focus();
+</script>
+{% endblock %}

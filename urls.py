@@ -16,4 +16,6 @@ urlpatterns = patterns('',
     (r'^sitemap\.xml$', 'django.contrib.sitemaps.views.sitemap', {'sitemaps': sitemaps}),
     (r'^robots\.txt$', 'robots.views.robots'),
     (r'^msisdn/', 'msisdn.views.area'),
+    (r'^login/', 'user.views.login'),
+    (r'^logout/', 'user.views.logout'),
 )
