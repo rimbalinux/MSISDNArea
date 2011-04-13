@@ -57,6 +57,7 @@ INSTALLED_APPS = (
     'redirects',
     'msisdn',
     'user',
+    'translate',
 )
 
 if has_djangoappengine:

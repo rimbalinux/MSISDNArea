@@ -18,4 +18,5 @@ urlpatterns = patterns('',
     (r'^msisdn/', 'msisdn.views.area'),
     (r'^login/', 'user.views.login'),
     (r'^logout/', 'user.views.logout'),
+    (r'^lang/(?P<lang_id>.*)$', 'translate.views.lang'),
 )
