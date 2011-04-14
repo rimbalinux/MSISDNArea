@@ -1,17 +1,18 @@
 {% extends 'base.html' %}
+{% load lang %}
 
-{% block title %}Wilayah MSISDN{% endblock %}
+{% block title %}{% t "Wilayah nomor handphone" %}{% endblock %}
 
 {% block content %}
 <form method="post" name="form1">
     <fieldset class="module aligned">
         <div class="form-row">
             <div>
-                <label for="username" class="required">{{ username }}:</label>
+                <label for="username" class="required">{% t "Username" %}:</label>
                 <input name="username" class="vTextField" />
             </div>
             <div>
-                <label for="password" class="required">{{ password }}:</label>
+                <label for="password" class="required">{% t "Sandi" %}:</label>
                 <input name="password" type="password" class="vTextField" />
             </div>
         </div>
@@ -24,6 +25,6 @@
 
 {% block js %}
 <script>
-    document.form1.msisdn.focus();
+    document.form1.username.focus();
 </script>
 {% endblock %}

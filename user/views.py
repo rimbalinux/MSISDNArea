@@ -3,16 +3,13 @@
 from django.contrib import auth
 from django.http import HttpResponseRedirect
 from django.views.generic.simple import direct_to_template
-from translate.lang import t
+from translate.lang import tr
 
 def login(request):
     if request.user.is_authenticated():
         return HttpResponseRedirect('/sudah-login-%s' % request.user.username)
     if not request.POST:
-        return direct_to_template(request, 'login.html', {
-            'username': t('Username', request),
-            'password': t('Password', request),
-            })
+        return direct_to_template(request, 'login.html')
     username = request.POST['username']
     password = request.POST['password']
     user = auth.authenticate(username=username, password=password) # just check
@@ -20,8 +17,7 @@ def login(request):
         auth.login(request, user) # session
         return HttpResponseRedirect('/')
     return direct_to_template(request, 'login.html', {
-        'error': t('Login gagal'),
-        't': t,
+        'error': tr('Login gagal', request),
         })
 
 def logout(request):
