@@ -475,7 +475,8 @@ BANNED_IPS = ()
 # AUTHENTICATION #
 ##################
 
-AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',)
+#AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',)
+AUTHENTICATION_BACKENDS = ('permission_backend_nonrel.backends.NonrelPermissionBackend'),
 
 LOGIN_URL = '/accounts/login/'
 

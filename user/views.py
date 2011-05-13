@@ -3,7 +3,6 @@
 from django.contrib import auth
 from django.http import HttpResponseRedirect
 from django.views.generic.simple import direct_to_template
-from translate.lang import tr
 
 def login(request):
     if request.user.is_authenticated():
@@ -17,7 +16,7 @@ def login(request):
         auth.login(request, user) # session
         return HttpResponseRedirect('/')
     return direct_to_template(request, 'login.html', {
-        'error': tr('Login gagal', request),
+        'error': 'Login gagal',
         })
 
 def logout(request):

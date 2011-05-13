@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.admin import UserAdmin, GroupAdmin
 from django.contrib.auth.models import User, Group
 
 class UserForm(forms.ModelForm):
@@ -13,6 +13,17 @@ class CustomUserAdmin(UserAdmin):
     fieldsets = None
     form = UserForm
 
+class GroupForm(forms.ModelForm):
+    class Meta:
+        model = Group
+        fields = ('name',)
+
+class CustomGroupAdmin(GroupAdmin):
+    fieldsets = None
+    form = GroupForm
+
+
 admin.site.unregister(User)
 admin.site.unregister(Group)
 admin.site.register(User, CustomUserAdmin)
+#admin.site.register(Group, CustomGroupAdmin)

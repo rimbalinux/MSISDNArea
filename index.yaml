@@ -33,3 +33,23 @@ indexes:
 # manually, move them above the marker line.  The index.yaml file is
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
+
+- kind: auth_group
+  properties:
+  - name: __key__
+    direction: desc
+
+- kind: authority_permission
+  properties:
+  - name: __key__
+    direction: desc
+
+- kind: msisdn_prefix
+  properties:
+  - name: __key__
+    direction: desc
+
+- kind: msisdn_product
+  properties:
+  - name: __key__
+    direction: desc

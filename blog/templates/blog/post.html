@@ -1,16 +1,17 @@
 {% load simplesocial %}
-<h1><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h1>
+{% load lang %}
+<h2><a href="{{ post.get_absolute_url }}">{% t post.title %}</a></h2>
 {% if not browse_posts %}
 <div class="author">
-By <strong>{{ post.author.get_full_name }}</strong> on <strong>{{ post.published_on|date }}</strong>
-<a href="{{ post.get_absolute_url }}#disqus_thread">Comments</a>
+    {% t "Oleh" %} <strong>{{ post.author.get_full_name }}</strong> {% t "pada" %} <strong>{{ post.published_on|date }}</strong>
+<a href="{{ post.get_absolute_url }}#disqus_thread">{% t "Komentar" %}</a>
 </div>
 {% endif %}
 
 {% wide_social_buttons request post.title post.get_absolute_url %}
 
 {% if browse_posts %}
-{{ post.rendered_content|truncatewords_html:150 }}
+{{ post.content|truncatewords:150|t:request }}
 {% else %}
-{{ post.rendered_content }}
+{% t post.content %}
 {% endif %}

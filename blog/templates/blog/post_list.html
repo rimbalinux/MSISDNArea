@@ -1,5 +1,6 @@
 {% extends 'blog/base.html' %}
 {% load disqus_tags %}
+{% load lang %}
 {% block title %}{{ block.super }}{% if blog.keywords.strip %} - {{ blog.keywords.strip }}{% endif %}{% endblock %}
 
 {% block extra-head %}
@@ -14,11 +15,11 @@
   <div class="post post-in-list">
     {% include 'blog/post.html' %}
     <div class="post-footer">
-      <a href="{{ post.get_absolute_url }}">Continue &raquo;</a>
+        <a href="{{ post.get_absolute_url }}">{% t "Selengkapnya" %} &raquo;</a>
       |
       By {{ post.author.get_full_name }} on {{ post.published_on|date }}
       |
-      <a href="{{ post.get_absolute_url }}#disqus_thread">Comments</a>
+      <a href="{{ post.get_absolute_url }}#disqus_thread">{% t "Komentar" %}</a>
     </div>
   </div>
 {% endfor %}

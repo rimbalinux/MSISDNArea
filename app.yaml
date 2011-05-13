@@ -1,16 +1,21 @@
 application: msisdnarea 
-version: 3 
+version: 4
 runtime: python
 api_version: 1
 
 builtins:
 - remote_api: on
+- datastore_admin: on
 
 inbound_services:
 - warmup
 
 handlers:
 - url: /remote_api
+  script: $PYTHON_LIB/google/appengine/ext/remote_api/handler.py
+  login: admin
+
+- url: /_ah/remote_api
   script: $PYTHON_LIB/google/appengine/ext/remote_api/handler.py
   login: admin
 
@@ -29,6 +34,9 @@ handlers:
 - url: /media
   static_dir: _generated_media/
   expiration: '365d'
+
+- url: /images
+  static_dir: images/
 
 - url: /.*
   script: djangoappengine/main/main.py

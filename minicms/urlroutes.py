@@ -7,4 +7,4 @@ class PageRoutes(URLHandler):
 
     def show(self, request, page):
         return direct_to_template(request, 'minicms/page_detail.html',
-            {'page': page})
+            {'page': page })

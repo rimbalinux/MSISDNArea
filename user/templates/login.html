@@ -1,25 +1,24 @@
 {% extends 'base.html' %}
 {% load lang %}
 
-{% block title %}{% t "Wilayah nomor handphone" %}{% endblock %}
+{% block title %}{% t "Masuk" %}{% endblock %}
 
 {% block content %}
+
+<br />
+<br />
+{% t "<strong>Livelihood Members Database</strong> adalah tempat produksi dan potensi sumber daya manusia dimana para penjual dan pembeli bisa bertemu. Menyediakan fasilitas untuk sertifikasi produk yang dapat ditelusuri keberadaannya, lengkap dengan koordinat GPS para anggota." %}
+
+{% endblock %}
+
+{% block sidebar %}
+<p />
 <form method="post" name="form1">
-    <fieldset class="module aligned">
-        <div class="form-row">
-            <div>
-                <label for="username" class="required">{% t "Username" %}:</label>
-                <input name="username" class="vTextField" />
-            </div>
-            <div>
-                <label for="password" class="required">{% t "Sandi" %}:</label>
-                <input name="password" type="password" class="vTextField" />
-            </div>
-        </div>
-    </fieldset>
-    <div class="submit-row">
-        <input type="submit" class="form-submit" value="Login" />
-    </div>
+  <label>{% t "Nama pengguna" %}:</label>
+  <input name="username">
+  <label>{% t "Sandi" %}:</label>
+  <input name="password" type="password">
+  <input type="submit" value="{% t "Masuk" %}">
 </form>
 {% endblock %}
 

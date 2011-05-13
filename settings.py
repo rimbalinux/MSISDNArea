@@ -24,9 +24,9 @@ import os
 #}
 # -----------------
 
-SITE_NAME = 'My site'
+SITE_NAME = 'Mata Pencaharian'
 SITE_DESCRIPTION = ''
-SITE_COPYRIGHT = ''
+SITE_COPYRIGHT = 'Livelihood Members Database'
 DISQUS_SHORTNAME = ''
 GOOGLE_ANALYTICS_ID = ''
 # Get the ID from the CSE "Basics" control panel ("Search engine unique ID")
@@ -58,6 +58,9 @@ INSTALLED_APPS = (
     'msisdn',
     'user',
     'translate',
+    'easy_maps',
+    'permission_backend_nonrel',
+    'authority',
 )
 
 if has_djangoappengine:

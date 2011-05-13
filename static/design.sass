@@ -6,10 +6,6 @@
 #header, #footer
   font-size: 11px
 
-#header
-  padding: 13px 0 0
-  margin: 0 auto 20px
-  overflow: hidden
 
 .columns
   margin: 0 auto 0
@@ -26,9 +22,6 @@
   margin: 0 auto 0
   padding: 40px 0
 
-#header, #footer
-  width: 970px
-
 .columns
   padding: 0px 25px
   width: 920px
@@ -44,26 +37,34 @@
 // custom design
 
 body
-  color: #36393D
+  color: #484848
+  font-family: "Segoe UI","Lucida Grande","Lucida Sans",calibri,Arial,Helvetica,sans-serif
+  margin: 0 auto
+  font-size: 12px
+  color: #484848
+  margin: 0
+  padding: 0
+  min-width: 900px
+  background: #fff
+  background: #FFF url("/images/bg_new.jpg") repeat-y center top
 
 .relevant-projects, .recent-blog-posts
   list-style: none
   margin-left: 5px
 
-a
+//a
   color: #1985B5
 
 a:hover
   text-decoration: underline
 
 #header
-  height: 135px
-  border-bottom: 4px solid #36393D
-  margin-bottom: 50px
-  margin-top: 20px
+  background: url("/images/header.jpg") no-repeat center top #ffc000
+  height: 86px
+  border-bottom: 3px solid #ff6600
 
 #header a, .post h1 a
-  color: #36393D
+  color: white
   text-decoration: none
 
 .post h1 a:hover
@@ -80,21 +81,52 @@ a:hover
   display: inline
   float: right
 
+.table
+  display: table
+
+.table-row
+  display: table-row
+
+.table-cell
+  display: table-cell
+
+#menu-header
+  background: url("/images/nav_bg.png") repeat-y scroll center top #ff6600
+
+#menu-container
+  margin-left: auto
+  margin-right: auto
+  width: 980px
+
+#menu-lang
+  text-align: right
+
 .menu
   clear: both
   list-style: none
-  text-align: center
-  margin: 0
-  padding: 25px 0 0 0
+  text-align: left 
+  margin: 0 
+  padding: 5px 0
 
   li
     display: inline
-    margin: 0 25px 0 0
-    font-size: 18px
+    border-right: 1px solid #ff9900
+    color: #feffea
+    font-size: 11px
+    font-weight: bold
+    padding: 6px 10px
+    white-space: nowrap
+
+    a
+      color: white
+      text-decoration: none
 
     &.active-menu-item
-      font-weight: bold
-      color: black
+      font-size: 14px
+
+    &:hover
+      color: #F60
+      background-color: #F9C50D
 
 h1
   margin-bottom: 15px
@@ -130,13 +162,15 @@ h2 a.external, h3 a.external
   margin-bottom: 30px
 
 #sidebar form
-  background-color: #F0EDDE
   padding: 10px
 
   -moz-border-radius: 10px
   -webkit-border-radius: 10px
   -ms-border-radius: 10px
   border-radius: 10px
+
+  label
+    display: block
 
 .join-button
   padding: 5px
@@ -170,11 +204,11 @@ h2 a.external, h3 a.external
   width: 240px
 
 #footer
+  margin-left: auto
+  margin-right: auto
+  width: 980px
   margin-top: 20px
   border-top: 5px solid #36393D
-
-  *
-    text-align: center
 
 .feed-widget
   clear: both
